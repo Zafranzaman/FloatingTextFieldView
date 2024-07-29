@@ -10,98 +10,116 @@ import SwiftUI
 struct FloatingTextFieldView: View {
     @Binding var text: String
     var title: String
-    var height: CGFloat
+    var height: CGFloat = 60
     var titleFontWeight: Font.Weight = .semibold
     var textFontSize: CGFloat = 16
-    var textFontWeight: Font.Weight = .regular
+    var textFontWeight: Font.Weight = .semibold
     var isSecureField: Bool = false
-    var showClearButton: Bool = false
     var isDropdownField: Bool = false
-
-    @State private var isSecured: Bool = true
+    
+    @State private var showClearButton: Bool = false
+    @State private var isSecured: Bool = false
     @State private var isEditing: Bool = false
-
+    @FocusState private var isFocused: Bool
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            ZStack(alignment: .leading) {
-                // Floating label
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(titleFontWeight)
-                    .foregroundColor(.tintPrimary50)
-                    .background(Color.white.opacity(0.2))
-                    .padding(.horizontal, 10)
-                    .background(Color.white)
-                    .offset(y: (!text.isEmpty || isEditing) ? -18 : 0)
-                    .scaleEffect((!text.isEmpty || isEditing) ? 0.8 : 1, anchor: .leading)
-                    .animation(.easeInOut(duration: 0.2), value: !text.isEmpty || isEditing)
-
-                HStack {
-                    if isDropdownField {
-                        // Add dropdown icon or button here
-                        Image(systemName: "chevron.down")
-                            .foregroundColor(.tintPrimary)
-                    }
-
-                    if isSecureField && isSecured {
+        ZStack(alignment: .leading) {
+            // Background with stroke and fill
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(isEditing ? Color.primaryBg : .tintPrimary50.opacity(0.1), lineWidth: 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white)
+                )
+                .frame(height: height)
+            
+            // Floating label
+            Text(title)
+                .font(.system(size: isEditing ? 12 : 14, weight: .semibold))
+                .foregroundColor(.tintPrimary50)
+                .background(Color.clear)
+                .padding(.horizontal, isEditing ? 16 : 14)
+                .offset(y: (!text.isEmpty || isEditing) ? -height / 2 + 16 : 0)
+                .scaleEffect((!text.isEmpty || isEditing) ? 0.857 : 1, anchor: .leading)
+                .animation(.easeInOut(duration: 0.2), value: !text.isEmpty || isEditing)
+            
+            // TextField/SecureField and icons
+            HStack {
+                if isDropdownField {
+                    // Add dropdown icon or button here
+                    Image(systemName: "chevron.down")
+                        .foregroundColor(.tintPrimary50)
+                }
+                
+                if isSecureField {
+                    if isSecured {
                         SecureField("", text: $text)
-                            .font(.system(size: textFontSize, weight: textFontWeight))
+                            .font(.system(size: textFontSize, weight: .semibold))
+                            .focused($isFocused)
+                            .padding(.top, (!text.isEmpty || isEditing) ? 10 : 0)
                             .onTapGesture {
                                 isEditing = true
                             }
                             .onChange(of: text) { newValue in
                                 if newValue.isEmpty {
+                                    showClearButton = true
                                     isEditing = false
                                 }
                             }
                     } else {
                         TextField("", text: $text, onEditingChanged: { editing in
                             isEditing = editing
+                            showClearButton = true
                         })
-                        .font(.system(size: textFontSize, weight: textFontWeight))
-                        
+                        .font(.system(size: textFontSize, weight: .semibold))
+                        .focused($isFocused)
+                        .padding(.top, (!text.isEmpty || isEditing) ? 10 : 0)
                     }
-
-                    if isSecureField {
-                        Button(action: {
-                            isSecured.toggle()
-                        }) {
-                            Image(systemName: isSecured ? "eye.slash" : "eye")
-                                .foregroundColor(.tintPrimary)
-                        }
-                    }
-
-                    if showClearButton && !text.isEmpty {
-                        Button(action: {
-                            self.text = ""
-                        }) {
-                            Image(systemName: "multiply.circle.fill")
-                                .foregroundColor(.tintPrimary50)
-                        }
-                        .padding(.trailing, 10)
+                } else {
+                    TextField("", text: $text, onEditingChanged: { editing in
+                        isEditing = editing
+                        showClearButton = true
+                    })
+                    .font(.system(size: textFontSize, weight: .semibold))
+                    .focused($isFocused)
+                    .padding(.top, (!text.isEmpty || isEditing) ? 10 : 0)
+                }
+                
+                if isSecureField {
+                    Button(action: {
+                        isSecured.toggle()
+                    }) {
+                        Image(systemName: isSecured ? "eye.slash" : "eye")
+                            .foregroundColor(.tintPrimary50)
                     }
                 }
-                .frame(height: height) // Use the custom height for the text field
-                .padding(EdgeInsets(top: 5, leading: 10, bottom: -6, trailing: 10))
-                .background(RoundedRectangle(cornerRadius: 10).stroke(isEditing ? Color.primaryBg : Color.tintPrimary50, lineWidth: 2))
-                .background(Color.tintPrimary50.opacity(0.1))
-                .cornerRadius(10)
                 
+                if showClearButton {
+                    if !text.isEmpty {
+                        Button(action: {
+                            showClearButton = false
+                            self.text = ""
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.tintPrimary50)
+                        }
+                    }
+                }
             }
+            .padding(.horizontal, 14)
         }
-        .padding(.vertical, 0)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 }
 
-#Preview {
-    FloatingTextFieldView(
-        text: .constant(""),
-        title: "Enter Email",
-        height: 50,
-        textFontSize: 14,
-        textFontWeight: .semibold,
-        isSecureField: true,
-        showClearButton: true
-    )
-    .padding(.horizontal)
+struct FloatingTextFieldView_Previews: PreviewProvider {
+    static var previews: some View {
+        FloatingTextFieldView(
+            text: .constant(""),
+            title: "New Password",
+            isSecureField: true
+        )
+        .padding()
+        .previewLayout(.sizeThatFits)
+    }
 }

@@ -23,22 +23,14 @@ struct ContentView: View {
             FloatingTextFieldView(
                 text: $email,
                 title: "Email",
-                height: 55,
-                textFontSize: 14,
-                textFontWeight: .semibold,
-                isSecureField: false,
-                showClearButton: true
+                isSecureField: false
             )
             .padding()
             
             FloatingTextFieldView(
                 text: $password,
-                title: "Password",
-                height: 55,
-                textFontSize: 18,
-                textFontWeight: .medium,
-                isSecureField: true,
-                showClearButton: true
+                title: "New Password",
+                isSecureField: true
             )
             .padding()
         }
